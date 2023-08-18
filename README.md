@@ -1,5 +1,6 @@
 # coom-dl
-Coomer .party or su downloader creator site ripper.
+Coomer .party or su downloader creator site ripper. For windows only
+macos and linux coming soon
 
 ## [Download](https://github.com/notFaad/coom-dl/releases/tag/0.18)
 ## Screenshots:
