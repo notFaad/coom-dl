@@ -1,5 +1,5 @@
 # coom-dl
-The fastest Coomer .party or su creator downloader. 
+The fastest Coomer | kemono  .party or su creator downloader. 
 For windows only macos and linux coming soon
 
 ## [Download](https://github.com/notFaad/coom-dl/releases/tag/018b)
