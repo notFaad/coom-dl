@@ -11,7 +11,7 @@ For windows only macos and linux coming soon
 | User friendly?| Yes ✔ (Everything you need is in the program) | No ❌ (Dependent on external files and tools) |
 | Download fail retry?| Yes ✔ (Multiple download retries for failures) | No ❌ (if download fails the file doesn't get downloaded) |
 | GUI?| Yes ✔ | No ❌ (CLI, can be very complex for non-tech people) |
-|Tool? |Flutter/Dart|Python|
+|Tool? |Flutter/Dart|Rust|
 
 ## Performance:
 | Type | Coom-dl Time(H:M:S) | Cyberdrop-dl Time(H:M:S)  |
@@ -25,6 +25,6 @@ For windows only macos and linux coming soon
 
 
 ## [Join Discord to Reach me Faster](https://discord.gg/HrctGNnrF4)
-## [Download](https://github.com/notFaad/coom-dl/releases/tag/0.27)
+## [Download](https://github.com/notFaad/coom-dl/releases/tag/0.5)
 ## Screenshots:
 ![alt text](https://github.com/notFaad/coom-dl/blob/main/Screenshot%202023-08-21%20120825.png)
