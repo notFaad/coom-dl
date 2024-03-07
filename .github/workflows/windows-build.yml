@@ -1,0 +1,35 @@
+name: Flutter CI
+
+on: push
+
+jobs:
+  build-and-release-windows:
+    runs-on: windows-latest
+    
+    steps:
+        - uses: actions/checkout@v2
+        - uses: subosito/flutter-action@v1
+          with:
+            channel: 'stable'
+            flutter-version: '2.10.0'
+        - name: Install project dependencies
+          run: flutter pub get
+        - name: Generate intermediates
+          run: flutter pub run build_runner build --delete-conflicting-outputs
+        - name: Enable windows build
+          run: flutter config --enable-windows-desktop
+        - name: Build artifacts
+          run: flutter build windows --release
+        - name: Archive Release
+          uses: thedoctor0/zip-release@master
+          with:
+            type: 'zip'
+            filename: coom-dl-${{github.ref_name}}-windows.zip
+            directory: build/windows/runner/Release
+        - name: Windows Release
+          uses: softprops/action-gh-release@v1
+          if: startsWith(github.ref, 'refs/tags/')
+          env:
+            GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          with:
+            files: build/windows/runner/Release/coom-dl-${{github.ref_name}}-windows.zip
