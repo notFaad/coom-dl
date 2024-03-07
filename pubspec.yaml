@@ -1,5 +1,5 @@
 name: coom_dl
-description: A new Flutter project.
+description: A tool to download from "kemono.su" and coomer.su".
 # The following line prevents the package from being accidentally published to
 # pub.dev using `flutter pub publish`. This is preferred for private packages.
 publish_to: 'none' # Remove this line if you wish to publish to pub.dev
@@ -46,6 +46,7 @@ dependencies:
   dio: ^5.3.2
   system_info2: ^4.0.0
   hive: ^2.2.3
+  build_runner: ^2.4.8
 
 dev_dependencies:
   flutter_test:
