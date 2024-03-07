@@ -222,7 +222,7 @@ class CybCrawl {
 
         var interalHtml = dom.Document.html(value.body);
         var contents_images = interalHtml.querySelectorAll(
-            "div.post__thumbnail > a"); //post__attachment-link
+            "div.post__thumbnail a"); //post__attachment-link
         var contents_vids =
             interalHtml.querySelectorAll("a.post__attachment-link");
 
