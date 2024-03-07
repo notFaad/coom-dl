@@ -151,7 +151,7 @@ class _MyHomePageState extends State<MyHomePage> {
         actions: [
           IconButton(
               onPressed: () {
-                launchUrl(Uri.parse("https://github.com/notFaad/coom-dl"));
+                launchUrl(Uri.parse("https://github.com/xposedrelay/coom-dl"));
               },
               icon: Icon(
                 FontAwesomeIcons.github,
