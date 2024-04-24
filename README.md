@@ -1,6 +1,10 @@
 # coom-dl
+<a href="https://buymeacoffee.com/notfaad" target="_blank"><img src="https://cdn.buymeacoffee.com/buttons/default-orange.png" alt="Buy Me A Coffee" height="41" width="174"></a>
+<br></br>
+**Consider buying me a coffee it makes me motivated to building softwares that help the community.**
+
 The fastest Coomer | kemono  .party or su creator downloader. 
-For windows only macos and linux coming soon
+For windows only macos and linux coming soon.
 
 ## Compare(vs)
 | Q | Coom-dl | Cyberdrop-dl |
