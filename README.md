@@ -1,3 +1,5 @@
+
+![alt text](https://github.com/notFaad/coom-dl/blob/main/coom-dl_banner.png)
 # coom-dl
 <a href="https://buymeacoffee.com/notfaad" target="_blank"><img src="https://cdn.buymeacoffee.com/buttons/default-orange.png" alt="Buy Me A Coffee" height="41" width="174"></a>
 <br></br>
@@ -29,6 +31,4 @@ For windows only macos and linux coming soon.
 
 
 ## [Join Discord to Reach me Faster](https://discord.gg/HrctGNnrF4)
-## [Download](https://github.com/notFaad/coom-dl/releases/tag/0.5)
-## Screenshots:
-![alt text](https://github.com/notFaad/coom-dl/blob/main/Screenshot%202023-08-21%20120825.png)
+## [Download](https://github.com/notFaad/coom-dl/releases/tag/0.72)
