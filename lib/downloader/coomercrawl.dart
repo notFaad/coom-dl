@@ -337,6 +337,7 @@ class CybCrawl {
       }
       http.BaseRequest connection = http.Request('GET', imageURL);
       var dio = Dio();
+      dio.options.headers["Accept"] = "text/css";
       if (imageURL.host.contains("erome")) {
         //Solves Erome 405 not allowed Error:
         dio.options.headers = {"Referer": "https://www.erome.com/"};
