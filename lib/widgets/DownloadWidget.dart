@@ -1,12 +1,9 @@
-import 'dart:io';
-
 import 'package:coom_dl/data/models/DlTask.dart';
 import 'package:coom_dl/utils/FileSizeConverter.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:get/get.dart';
 import 'package:isar/isar.dart';
-import 'package:url_launcher/url_launcher.dart';
 import 'package:url_launcher/url_launcher_string.dart';
 
 import '../constant/appcolors.dart';
@@ -28,49 +25,155 @@ class DownloadWidget extends StatefulWidget {
 
 class _DownloadWidgetState extends State<DownloadWidget> {
   bool _paused = false;
+
+  // Extract subdomain from URL
+  String _extractSiteName(String url) {
+    try {
+      Uri uri = Uri.parse(url);
+      String host = uri.host.toLowerCase();
+
+      // Remove 'www.' if present
+      if (host.startsWith('www.')) {
+        host = host.substring(4);
+      }
+
+      // Extract subdomain (first part before first dot)
+      List<String> parts = host.split('.');
+      if (parts.isNotEmpty) {
+        return parts.first;
+      }
+      return 'unknown';
+    } catch (e) {
+      return 'unknown';
+    }
+  }
+
+  // Get gradient colors based on site name
+  List<Color> _getSiteGradient(String siteName) {
+    switch (siteName.toLowerCase()) {
+      case 'coomer':
+        return [
+          const Color(0xFF6B46C1), // Purple
+          const Color(0xFF9333EA), // Lighter purple
+        ];
+      case 'kemono':
+        return [
+          const Color(0xFF0891B2), // Cyan
+          const Color(0xFF0EA5E9), // Light blue
+        ];
+      case 'erome':
+        return [
+          const Color(0xFFDC2626), // Red
+          const Color(0xFFEF4444), // Light red
+        ];
+      case 'fapello':
+        return [
+          const Color(0xFF059669), // Green
+          const Color(0xFF10B981), // Light green
+        ];
+      default:
+        return [
+          Appcolors.appAccentColor,
+          Appcolors.appAccentColor.withOpacity(0.7),
+        ];
+    }
+  }
+
+  // Create gradient thumbnail with site name
+  Widget _buildSiteThumbnail() {
+    String siteName = _extractSiteName(widget.task.url);
+    List<Color> gradientColors = _getSiteGradient(siteName);
+
+    return Container(
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(7),
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: gradientColors,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: gradientColors.first.withOpacity(0.3),
+            blurRadius: 8,
+            offset: const Offset(0, 3),
+          ),
+        ],
+      ),
+      child: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              Icons.cloud_download_rounded,
+              color: Colors.white.withOpacity(0.9),
+              size: 24,
+            ),
+            const SizedBox(height: 4),
+            Text(
+              siteName.toUpperCase(),
+              style: TextStyle(
+                color: Colors.white.withOpacity(0.95),
+                fontSize: 11,
+                fontWeight: FontWeight.bold,
+                letterSpacing: 0.5,
+              ),
+              textAlign: TextAlign.center,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 5),
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
       child: Container(
         decoration: BoxDecoration(
-            color: Appcolors.appNaigationColor.withAlpha(80),
-            boxShadow: [
-              BoxShadow(
-                  color: Appcolors.appAccentColor.withAlpha(80),
-                  blurRadius: 0,
-                  blurStyle: BlurStyle.outer,
-                  offset: const Offset(2, 2),
-                  spreadRadius: 0.5)
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: Appcolors.appAccentColor.withOpacity(0.2),
+            width: 1,
+          ),
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [
+              Appcolors.appSecondaryColor.withOpacity(0.3),
+              Appcolors.appSecondaryColor.withOpacity(0.1),
             ],
-            borderRadius: BorderRadius.circular(5)),
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: Appcolors.appAccentColor.withOpacity(0.1),
+              blurRadius: 15,
+              offset: const Offset(0, 6),
+            ),
+          ],
+        ),
         height: 100,
         child: Row(
           children: [
             // image
-            Column(
-              children: [
-                Container(
-                    margin: const EdgeInsets.all(5),
-                    padding: const EdgeInsets.all(5),
-                    width: 90,
-                    height: 90,
-                    color: Appcolors.appBackgroundColor.withAlpha(80),
-                    child: () {
-                      if (widget.task.pathToThumbnail == null) {
-                        return Image.asset(
-                          'assets/Cnex.png',
-                          fit: BoxFit.fitWidth,
-                        );
-                      } else {
-                        return Image.file(
-                          File(
-                              "/Users/saadal-ageel/coom-dl/coomdl/assets/logo.png"),
-                          fit: BoxFit.cover,
-                        );
-                      }
-                    }()),
-              ],
+            Container(
+              width: 100,
+              padding: const EdgeInsets.all(8),
+              child: Container(
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(8),
+                  color: Appcolors.appBackgroundColor.withOpacity(0.6),
+                  border: Border.all(
+                    color: Appcolors.appAccentColor.withOpacity(0.1),
+                    width: 1,
+                  ),
+                ),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(7),
+                  child: _buildSiteThumbnail(),
+                ),
+              ),
             ),
             // Download information
             Expanded(
@@ -96,14 +199,22 @@ class _DownloadWidgetState extends State<DownloadWidget> {
                         width: 90,
                         height: 25,
                         child: Container(
-                            color: Appcolors.appBackgroundColor.withAlpha(50),
+                            decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(12),
+                              color: Appcolors.appAccentColor.withOpacity(0.1),
+                              border: Border.all(
+                                color:
+                                    Appcolors.appAccentColor.withOpacity(0.2),
+                                width: 1,
+                              ),
+                            ),
                             child: Center(
                                 child: Text(
                                     "${widget.task.tag ?? "No Tag"}", // <- Site match here
                                     overflow: TextOverflow.ellipsis,
                                     textAlign: TextAlign.center,
                                     style: const TextStyle(
-                                        fontWeight: FontWeight.bold,
+                                        fontWeight: FontWeight.w600,
                                         color: Appcolors.appPrimaryColor,
                                         fontSize: 9))))),
                     const Spacer(),
@@ -111,7 +222,14 @@ class _DownloadWidgetState extends State<DownloadWidget> {
                       margin: const EdgeInsets.all(8),
                       padding: const EdgeInsets.all(5),
                       height: 40,
-                      color: Appcolors.appBackgroundColor.withAlpha(50),
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(8),
+                        color: Appcolors.appAccentColor.withOpacity(0.1),
+                        border: Border.all(
+                          color: Appcolors.appAccentColor.withOpacity(0.2),
+                          width: 1,
+                        ),
+                      ),
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
@@ -119,10 +237,19 @@ class _DownloadWidgetState extends State<DownloadWidget> {
                               (widget.task.isDownloading ?? false)) ...[
                             IconButton(
                                 style: IconButton.styleFrom(
-                                    hoverColor: Appcolors.appPrimaryColor,
-                                    foregroundColor: Appcolors.appAccentColor,
-                                    backgroundColor:
-                                        Appcolors.appNaigationColor),
+                                    hoverColor: Appcolors.appPrimaryColor
+                                        .withOpacity(0.2),
+                                    foregroundColor: Appcolors.appPrimaryColor,
+                                    backgroundColor: Appcolors.appAccentColor
+                                        .withOpacity(0.1),
+                                    side: BorderSide(
+                                      color: Appcolors.appAccentColor
+                                          .withOpacity(0.2),
+                                      width: 1,
+                                    ),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(6),
+                                    )),
                                 onPressed: () async {
                                   // Pause Download Button
                                   await widget.isar.writeTxn(() async {
@@ -160,10 +287,19 @@ class _DownloadWidgetState extends State<DownloadWidget> {
                               (widget.task.isCompleted ?? false)) ...[
                             IconButton(
                                 style: IconButton.styleFrom(
-                                    hoverColor: Appcolors.appPrimaryColor,
-                                    foregroundColor: Appcolors.appAccentColor,
-                                    backgroundColor:
-                                        Appcolors.appNaigationColor),
+                                    hoverColor: Appcolors.appPrimaryColor
+                                        .withOpacity(0.2),
+                                    foregroundColor: Appcolors.appPrimaryColor,
+                                    backgroundColor: Appcolors.appAccentColor
+                                        .withOpacity(0.1),
+                                    side: BorderSide(
+                                      color: Appcolors.appAccentColor
+                                          .withOpacity(0.2),
+                                      width: 1,
+                                    ),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(8),
+                                    )),
                                 onPressed: () async {
                                   // Open Download Directory
 
@@ -196,10 +332,18 @@ class _DownloadWidgetState extends State<DownloadWidget> {
                             ),
                             IconButton(
                                 style: IconButton.styleFrom(
-                                    hoverColor: Colors.red[400],
-                                    foregroundColor: Appcolors.appAccentColor,
+                                    hoverColor:
+                                        Colors.red[400]!.withOpacity(0.2),
+                                    foregroundColor: Colors.red[400],
                                     backgroundColor:
-                                        Appcolors.appNaigationColor),
+                                        Colors.red[400]!.withOpacity(0.1),
+                                    side: BorderSide(
+                                      color: Colors.red[400]!.withOpacity(0.2),
+                                      width: 1,
+                                    ),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(8),
+                                    )),
                                 onPressed: () async {
                                   // Stop and Delete download
                                   var tmp = await widget.isar.downloadTasks
@@ -274,7 +418,13 @@ class _DownloadWidgetState extends State<DownloadWidget> {
                         } else {
                           return Text(
                             overflow: TextOverflow.ellipsis,
-                            "[ ${widget.downloadinfo["total"]} / ${widget.task.totalNum} ] | OK: ${widget.downloadinfo["ok"]} | FAIL: ${widget.downloadinfo["fail"]} | ${((widget.downloadinfo["total"] / widget.task.totalNum) * 100).toStringAsFixed(1)} % | ${FileSizeConverter.getFileSizeString(bytes: widget.downloadinfo["size"])}",
+                            "[ ${widget.downloadinfo["total"]} / ${widget.task.totalNum} ] | OK: ${widget.downloadinfo["ok"]} | FAIL: ${widget.downloadinfo["fail"]} | ${(() {
+                              final total = widget.task.totalNum ?? 0;
+                              final current = widget.downloadinfo["total"] ?? 0;
+                              if (total == 0) return "0.0";
+                              return ((current / total) * 100)
+                                  .toStringAsFixed(1);
+                            })()} % | ${FileSizeConverter.getFileSizeString(bytes: widget.downloadinfo["size"])}",
                             style: TextStyle(
                                 color: Appcolors.appPrimaryColor,
                                 fontSize: 12,
@@ -291,7 +441,6 @@ class _DownloadWidgetState extends State<DownloadWidget> {
                                 Colors.green[200]!,
                                 Appcolors.appLogoColor
                               ]);
-                          ;
                         }
                       }(),
                     )
@@ -299,15 +448,28 @@ class _DownloadWidgetState extends State<DownloadWidget> {
                 ),
                 if (widget.task.totalNum != null &&
                     (widget.task.isDownloading ?? false)) ...[
-                  SizedBox(
-                      height: 7.5,
-                      width: double.infinity,
+                  Container(
+                    margin:
+                        const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                    height: 6,
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(3),
+                      color: Appcolors.appAccentColor.withOpacity(0.1),
+                    ),
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(3),
                       child: LinearProgressIndicator(
-                        value: (widget.downloadinfo['total'] /
-                            widget.task.totalNum),
-                        backgroundColor: Appcolors.appLogoColor,
+                        value: (() {
+                          final total = widget.task.totalNum ?? 0;
+                          final current = widget.downloadinfo['total'] ?? 0;
+                          if (total == 0) return 0.0;
+                          return (current / total).clamp(0.0, 1.0);
+                        })(),
+                        backgroundColor: Colors.transparent,
                         color: Appcolors.appPrimaryColor,
-                      ))
+                      ),
+                    ),
+                  )
                 ]
               ],
             ))

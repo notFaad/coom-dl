@@ -47,7 +47,7 @@ class KemonoCoomerCrawler {
     String? link = "";
     String folder = "Error";
     if (RegExp(
-            r'^((https:\/\/)|(https:\/\/www\.))?coomer\.(party|su){1}\/(onlyfans|fansly){1}\/user{1}\/.+$')
+            r'^((https:\/\/)|(https:\/\/www\.))?coomer\.(party|su|st){1}\/(onlyfans|fansly){1}\/user{1}\/.+$')
         .hasMatch(url)) {
       //Coomer
       if (!RegExp(r'(post)\/\d+$').hasMatch(url)) {
@@ -57,7 +57,7 @@ class KemonoCoomerCrawler {
         contents_a = html.querySelectorAll(linksconfig["coomer"]["album"]);
         folder =
             " ${creator_html?.innerHtml.replaceAll(r'[\\\/:"*?<>|]+', "_")} (Coomer Creator)";
-        link = "https://coomer.su";
+        link = "https://coomer.st";
       } else {
         //Post scrape
         creator_html =
@@ -73,7 +73,7 @@ class KemonoCoomerCrawler {
             "[${published?.text.replaceAll(r':', "_").trim()}] ${creator_html?.innerHtml.replaceAll(r'[\\\/:"*?<>|]+', "_").trim()} (Coomer Post)";
       }
     } else if (RegExp(
-            r'^((https:\/\/)|(https:\/\/www\.))?kemono\.(party|su){1}\/.+$')
+            r'^((https:\/\/)|(https:\/\/www\.))?kemono\.(party|su|cr){1}\/.+$')
         .hasMatch(url)) {
       //Kemono
       if (!RegExp(r'(post)\/\d+$').hasMatch(url)) {
@@ -82,7 +82,7 @@ class KemonoCoomerCrawler {
         contents_a = html.querySelectorAll(linksconfig["coomer"]["album"]);
         folder =
             "${creator_html?.innerHtml.replaceAll(r'[\\\/:"*?<>|]+', "_")} (Kemono Creator)";
-        link = "https://kemono.su";
+        link = "https://kemono.cr";
       } else {
         creator_html =
             html.querySelector(linksconfig["coomer"]["creator-single"]);
