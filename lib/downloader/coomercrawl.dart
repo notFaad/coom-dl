@@ -126,8 +126,25 @@ class CybCrawl {
     Map<String, dynamic> wrt = {};
     port.listen((message) async {
       totalDownloaded++;
-      // await onDownloadedAlbum(totalDownloaded);
       threads_used--;
+
+      // Enhanced completion logging
+      if (message is Map && message.containsKey('thread_id')) {
+        Map<String, dynamic> logData = {
+          'title': 'THREAD_COMPLETE',
+          'status': 'COMPLETED',
+          'm':
+              '${message['thread_id']} completed download: ${message['filename'] ?? "unknown"}',
+          'thread_id': message['thread_id'],
+          'success': message['success'] ?? true,
+          'timestamp': DateTime.now().toIso8601String(),
+          'total_completed': totalDownloaded,
+          'active_threads': threads_used
+        };
+
+        IsolateNameServer.lookupPortByName("single")?.send(logData);
+        IsolateNameServer.lookupPortByName("debug_monitor")?.send(logData);
+      }
     });
     ReceivePort logger2 = ReceivePort();
     IsolateNameServer.registerPortWithName(logger2.sendPort, "single");
@@ -156,11 +173,34 @@ class CybCrawl {
       }()}'
     });
     for (var i = 0; i < links.length; i++) {
-      print(
-          "Checking download $i: threads_used=$threads_used, jobs=$jobs, isContinue=$isContinue, isPaused=$isPaused");
       if ((threads_used < jobs) && isContinue && !isPaused) {
         pauselocker = false;
-        print("Starting download for link $i");
+
+        // Enhanced logging for thread and URL tracking
+        String threadId = "Thread-${threads_used + 1}";
+        String fileName = links[i].filename ?? "unknown_file";
+        String url = links[i].url ?? "unknown_url";
+
+        IsolateNameServer.lookupPortByName("single")?.send({
+          'title': 'THREAD_START',
+          'status': 'DOWNLOADING',
+          'm': '$threadId starting download: $fileName',
+          'url': url,
+          'thread_id': threadId,
+          'file_index': i,
+          'timestamp': DateTime.now().toIso8601String()
+        });
+
+        // Send to debug monitor if enabled
+        IsolateNameServer.lookupPortByName("debug_monitor")?.send({
+          'title': 'THREAD_START',
+          'status': 'DOWNLOADING',
+          'm': '$threadId starting download: $fileName',
+          'url': url,
+          'thread_id': threadId,
+          'file_index': i,
+          'timestamp': DateTime.now().toIso8601String()
+        });
 
         threads_used++;
 

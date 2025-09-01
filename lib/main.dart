@@ -8,6 +8,8 @@ import 'package:coom_dl/data/models/extention.dart';
 import 'package:coom_dl/pages/addDownload.dart';
 import 'package:coom_dl/pages/downloadsPage.dart';
 import 'package:coom_dl/pages/settingsPage.dart';
+import 'package:coom_dl/pages/debugMonitor.dart';
+import 'package:coom_dl/pages/galleryViewer.dart';
 import 'package:coom_dl/services/downloadTaskServices.dart';
 import 'package:coom_dl/view-models/Recooma_engine.dart';
 import 'package:coom_dl/downloader/external/cyberdrop_dl_engine.dart';
@@ -28,12 +30,78 @@ import 'package:flutter/services.dart';
 import 'package:hive/hive.dart';
 import 'package:isar/isar.dart';
 import 'package:path_provider/path_provider.dart';
+import 'package:desktop_multi_window/desktop_multi_window.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:window_manager/window_manager.dart';
 
-Future<void> main() async {
+Future<void> _initHiveForDebugWindow() async {
+  try {
+    final appDocumentDir = await getApplicationDocumentsDirectory();
+    final hiveDir = Directory('${appDocumentDir.path}/hive_db');
+    if (!await hiveDir.exists()) {
+      await hiveDir.create(recursive: true);
+    }
+
+    if (!Hive.isBoxOpen('settings')) {
+      await Hive.openBox('settings', path: hiveDir.path);
+    }
+  } catch (e) {
+    print('Hive initialization error in debug window: $e');
+  }
+}
+
+Future<void> main(List<String> args) async {
   WidgetsFlutterBinding.ensureInitialized();
-  // Must add this line.
+
+  // Handle multi-window
+  if (args.firstOrNull == 'multi_window') {
+    int.parse(args[1]); // windowId - required but unused
+    final argument = args[2];
+    final data = jsonDecode(argument);
+
+    if (data['route'] == '/debug_monitor') {
+      // Initialize Hive for the debug window
+      await _initHiveForDebugWindow();
+      runApp(MaterialApp(
+        title: 'Debug Monitor',
+        theme: ThemeData.dark().copyWith(
+          scaffoldBackgroundColor: Appcolors.appBackgroundColor,
+          primaryColor: Appcolors.appPrimaryColor,
+        ),
+        home: const DebugMonitorPage(),
+        debugShowCheckedModeBanner: false,
+      ));
+      return;
+    }
+
+    if (data['name'] == 'gallery') {
+      // Launch gallery window
+      runApp(MaterialApp(
+        title: 'Gallery - ${data['downloadName'] ?? 'Unknown'}',
+        debugShowCheckedModeBanner: false,
+        theme: ThemeData(
+          brightness: Brightness.dark,
+          scaffoldBackgroundColor: const Color.fromARGB(255, 13, 13, 13),
+          primaryColor: Appcolors.appPrimaryColor,
+          cardColor: Appcolors.appAccentColor,
+          dividerColor: Appcolors.appPrimaryColor.withOpacity(0.1),
+          textTheme: const TextTheme(
+            bodyLarge: TextStyle(color: Colors.white),
+            bodyMedium: TextStyle(color: Colors.white70),
+          ),
+          iconTheme: IconThemeData(color: Appcolors.appPrimaryColor),
+        ),
+        home: GalleryViewer(
+          downloadId: data['downloadId'] ?? 0,
+          downloadName: data['downloadName'] ?? 'Unknown Download',
+          downloadPath: data['downloadPath'] ?? '',
+        ),
+      ));
+      return;
+    }
+  }
+
+  // Original main app initialization
   await windowManager.ensureInitialized();
 
   WindowOptions windowOptions = const WindowOptions(
