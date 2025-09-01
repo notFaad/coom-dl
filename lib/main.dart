@@ -1,8 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
-import 'dart:isolate';
-import 'dart:math';
 import 'package:coom_dl/constant/appcolors.dart';
 import 'package:coom_dl/data/models/DlTask.dart';
 import 'package:coom_dl/data/models/Link.dart';
@@ -14,11 +12,7 @@ import 'package:coom_dl/services/downloadTaskServices.dart';
 import 'package:coom_dl/view-models/Recooma_engine.dart';
 import 'package:coom_dl/downloader/external/cyberdrop_dl_engine.dart';
 import 'package:coom_dl/downloader/external/gallery_dl_engine.dart';
-import 'package:coom_dl/neocrawler/coomer_crawler.dart';
 import 'package:coom_dl/utils/FileSizeConverter.dart';
-import 'package:coom_dl/widgets/Dialogs/EngineSettings.dart';
-import 'package:coom_dl/widgets/Dialogs/History_dialog.dart';
-import 'package:coom_dl/widgets/Dialogs/LinksSettings.dart';
 import 'package:coom_dl/widgets/console.dart';
 import 'package:coom_dl/widgets/download_status.dart';
 import 'package:coom_dl/widgets/navigationtab.dart';
@@ -28,20 +22,13 @@ import 'package:flutter/widgets.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:get/get.dart';
 import 'package:http/http.dart' as http;
-import 'package:html/dom.dart' as html;
-import 'package:coom_dl/downloader/coomercrawl.dart';
 import 'package:file_selector/file_selector.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:hive/hive.dart';
-import 'package:intl/intl.dart';
 import 'package:isar/isar.dart';
-import 'package:json_editor_flutter/json_editor_flutter.dart';
 import 'package:path_provider/path_provider.dart';
-import 'package:system_info2/system_info2.dart';
 import 'package:url_launcher/url_launcher.dart';
-import 'package:uuid/uuid.dart';
 import 'package:window_manager/window_manager.dart';
 
 Future<void> main() async {
@@ -88,8 +75,14 @@ Future<void> main() async {
     await windowManager.show();
     await windowManager.focus();
   });
-  bool isExist = false;
   final dir = await getApplicationDocumentsDirectory();
+
+  // Initialize Hive
+  Hive.init(dir.path);
+  await Hive.openBox("settings");
+  await Hive.openBox("history");
+  await Hive.openBox("links");
+
   final isar = await Isar.open(
     [DownloadTaskSchema, LinksSchema, ExtentionSchema],
     directory: dir.path,
@@ -102,14 +95,14 @@ Future<void> main() async {
 }
 
 class MyApp extends StatefulWidget {
-  MyApp(
+  const MyApp(
       {super.key,
       required this.out_of_date,
       required this.version,
       required this.isar});
-  bool out_of_date;
-  double? version;
-  Isar isar;
+  final bool out_of_date;
+  final double? version;
+  final Isar isar;
 
   @override
   State<MyApp> createState() => _MyAppState();
@@ -126,7 +119,12 @@ class _MyAppState extends State<MyApp> with WindowListener {
   List<DownloadTask> queue = [];
   Map<int, dynamic> logs = {};
 
-  // This widget is the root of your application.
+  // Hive boxes - initialized in initState
+  Box? settingsBox;
+  Box? historyBox;
+  Box? linksBox;
+  bool _hiveBooksInitialized =
+      false; // This widget is the root of your application.
   @override
   void onWindowClose() async {
     // do something
@@ -187,6 +185,12 @@ class _MyAppState extends State<MyApp> with WindowListener {
 
   @override
   void initState() {
+    // Initialize Hive boxes
+    settingsBox = Hive.box("settings");
+    historyBox = Hive.box("history");
+    linksBox = Hive.box("links");
+    _hiveBooksInitialized = true;
+
     // automatic queue downloader
     windowManager.addListener(this);
     widget.isar.downloadTasks
@@ -269,7 +273,7 @@ class _MyAppState extends State<MyApp> with WindowListener {
             .onError((error, stackTrace) {
           print(error.toString());
           print(stackTrace.toString());
-          return Future.value(null);
+          return -1;
         });
       }).then(
         onError: (value) {
@@ -441,9 +445,18 @@ class _MyAppState extends State<MyApp> with WindowListener {
                         isar: widget.isar,
                       );
                     case 1:
-                      return const Offstage();
-                    case 2:
-                      return SettingsPage(isar: widget.isar);
+                      return _hiveBooksInitialized &&
+                              settingsBox != null &&
+                              historyBox != null &&
+                              linksBox != null
+                          ? SettingsPage(
+                              settingsBox: settingsBox!,
+                              historyBox: historyBox!,
+                              linksBox: linksBox!,
+                            )
+                          : const Center(
+                              child: CircularProgressIndicator(),
+                            );
                     case 3:
                       return const Offstage(); //not implemented 1,3
                     default:
@@ -489,7 +502,6 @@ class MyHomePage extends StatefulWidget {
 List<int> options = [0, 1, 2, 3];
 
 class _MyHomePageState extends State<MyHomePage> {
-  int _counter = 0;
   TextEditingController input = TextEditingController();
   // ignore: avoid_init_to_null
   String? directory = null;
@@ -501,10 +513,7 @@ class _MyHomePageState extends State<MyHomePage> {
   bool isCrawled = false;
   bool isLoading = false;
   int currentOption = options[0];
-  Box settingsBox = Hive.box("settings");
   Map settingMap = Hive.box("settings").toMap();
-  Box historyBox = Hive.box("history");
-  Box LinksBox = Hive.box("links");
   bool isDone = false;
   int clink = 0;
   int totalLinks = 0;
@@ -861,6 +870,7 @@ class _MyHomePageState extends State<MyHomePage> {
                       if (settingMap['eng'] == 0) {
                         await RecoomaEngineDownload(downloaded, total);
                       } else if (settingMap['eng'] == 1) {
+                        Box historyBox = Hive.box("history");
                         await GalleryDlEngine()
                             .download(
                                 url: url!,
@@ -884,6 +894,7 @@ class _MyHomePageState extends State<MyHomePage> {
                           ));
                         });
                       } else if (settingMap['eng'] == 2) {
+                        Box historyBox = Hive.box("history");
                         await CyberDropDownloaderEngine().download(
                             url: url!, dir: directory, historyBox: historyBox);
                       } else {
@@ -999,6 +1010,9 @@ class _MyHomePageState extends State<MyHomePage> {
 
   // ignore: non_constant_identifier_names
   Future<void> RecoomaEngineDownload(int d, int t) async {
+    Box historyBox = Hive.box("history");
+    Box LinksBox = Hive.box("links");
+
     await RecoomaEngine().download(
         isStandardPhoto: coomerPhotoOptions == 1 ? true : false,
         links_config: LinksBox.toMap(),

@@ -42,9 +42,9 @@ class CybCrawl {
     Map? contents = null;
     print("Started");
     try {
-      if (RegExp(r'^((https:\/\/)|(https:\/\/www\.))?coomer\.(party|su){1}\/(onlyfans|fansly|candfans){1}\/user{1}\/.+$')
+      if (RegExp(r'^((https:\/\/)|(https:\/\/www\.))?coomer\.(party|su|st){1}\/(onlyfans|fansly|candfans){1}\/user{1}\/.+$')
               .hasMatch(url) ||
-          RegExp(r'^((https:\/\/)|(https:\/\/www\.))?kemono\.(party|su){1}\/.+$')
+          RegExp(r'^((https:\/\/)|(https:\/\/www\.))?kemono\.(party|su|cr){1}\/.+$')
               .hasMatch(url)) {
         contents = await NeoCoomer.init(
           url: url,
@@ -156,8 +156,11 @@ class CybCrawl {
       }()}'
     });
     for (var i = 0; i < links.length; i++) {
+      print(
+          "Checking download $i: threads_used=$threads_used, jobs=$jobs, isContinue=$isContinue, isPaused=$isPaused");
       if ((threads_used < jobs) && isContinue && !isPaused) {
         pauselocker = false;
+        print("Starting download for link $i");
 
         threads_used++;
 
@@ -272,7 +275,12 @@ class CybCrawl {
     int retry_count = 0;
 
     if (imageURL.host.contains("download.php")) {
-      http.Response r = await http.head(imageURL);
+      Map<String, String> headers = {};
+      if (imageURL.host.contains("coomer") ||
+          imageURL.host.contains("kemono")) {
+        headers = {"Accept": "text/css"};
+      }
+      http.Response r = await http.head(imageURL, headers: headers);
       file_name = r.headers["Content-Disposition"] ?? "";
     }
 
@@ -340,6 +348,10 @@ class CybCrawl {
       if (imageURL.host.contains("erome")) {
         //Solves Erome 405 not allowed Error:
         dio.options.headers = {"Referer": "https://www.erome.com/"};
+      } else if (imageURL.host.contains("coomer") ||
+          imageURL.host.contains("kemono")) {
+        //Solves Coomer/Kemono DDoS guard protection:
+        dio.options.headers = {"Accept": "text/css"};
       }
 
       // Creates a HTTP dependent stream to directly inject bytes to ioSink instead of MEM.

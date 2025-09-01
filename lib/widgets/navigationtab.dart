@@ -56,22 +56,10 @@ class _NavigationtabState extends State<Navigationtab> {
               label: Offstage()),
           NavigationRailDestination(
               icon: Tooltip(
-                child: Icon(Icons.folder_off),
-                message: "Manager (Soon)",
-              ),
-              label: Offstage()),
-          NavigationRailDestination(
-              icon: Tooltip(
                 child: Icon(Icons.settings),
                 message: "Settings",
               ),
               label: Offstage()),
-          NavigationRailDestination(
-              icon: Tooltip(
-                child: Icon(Icons.extension_off_rounded),
-                message: "Extensions (Soon)",
-              ),
-              label: Offstage())
         ],
         onDestinationSelected: (val) => widget.callbackOnChange(val),
         trailing: Column(

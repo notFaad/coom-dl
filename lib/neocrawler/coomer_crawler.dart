@@ -1,36 +1,54 @@
 import 'dart:convert';
-import 'dart:io';
 import 'package:coom_dl/data/models/download.dart';
 import 'package:http/http.dart' as http;
 import 'package:uuid/uuid.dart';
 
 class NeoCoomer {
-  static var APIURL = "https://coomer.su/api/v1";
+  static var APIURL = "https://coomer.st/api/v1";
 
   static Future<Map<String, dynamic>> init({required url}) async {
     Uri parsed_url = Uri.parse(url);
     List<DownloadItem> download_file = [];
-    if (RegExp(r'^((https:\/\/)|(https:\/\/www\.))?coomer\.(party|su){1}\/(onlyfans|fansly|candfans){1}\/user{1}\/.+$')
+    if (RegExp(r'^((https:\/\/)|(https:\/\/www\.))?coomer\.(party|su|st){1}\/(onlyfans|fansly|candfans){1}\/user{1}\/.+$')
             .hasMatch(url) ||
-        RegExp(r'^((https:\/\/)|(https:\/\/www\.))?kemono\.(party|su){1}\/.+$')
+        RegExp(r'^((https:\/\/)|(https:\/\/www\.))?kemono\.(party|su|cr){1}\/.+$')
             .hasMatch(url)) {
       if (RegExp(
-              r'^((https:\/\/)|(https:\/\/www\.))?kemono\.(party|su){1}\/.+$')
+              r'^((https:\/\/)|(https:\/\/www\.))?kemono\.(party|su|cr){1}\/.+$')
           .hasMatch(url)) {
-        APIURL = "https://kemono.su/api/v1";
+        APIURL = "https://kemono.cr/api/v1";
       }
       if (!RegExp(r'(post)\/\d+$').hasMatch(url)) {
         print(parsed_url.query);
         print("$APIURL${parsed_url.path}");
 
-        var res = await http.get(Uri.parse("$APIURL${parsed_url.path}${() {
-          if (parsed_url.query.isEmpty) {
-            return "?o=0";
-          } else {
-            return "?${parsed_url.query}";
-          }
-        }()}"));
-        List content = jsonDecode(res.body);
+        var res = await http.get(
+            Uri.parse("$APIURL${parsed_url.path}/posts${() {
+              if (parsed_url.query.isEmpty) {
+                return "";
+              } else {
+                return "?${parsed_url.query}";
+              }
+            }()}"),
+            headers: {'Accept': 'text/css'});
+
+        print("Response status: ${res.statusCode}");
+        print("Response body length: ${res.body.length}");
+
+        var responseData = jsonDecode(res.body);
+
+        // Check if the response is an error object
+        if (responseData is Map && responseData.containsKey('error')) {
+          return Future.error("API Error: ${responseData['error']}");
+        }
+
+        // Ensure we have a List response
+        if (responseData is! List) {
+          return Future.error(
+              "Unexpected API response format: expected List, got ${responseData.runtimeType}");
+        }
+
+        List content = responseData;
         print(content.length);
         int nextquery = parsed_url.query.isEmpty
             ? 50
@@ -40,9 +58,26 @@ class NeoCoomer {
         while (true) {
           await Future.delayed(const Duration(milliseconds: 600));
 
-          var res = await http
-              .get(Uri.parse("$APIURL${parsed_url.path}?o=$nextquery"));
-          temp = jsonDecode(res.body);
+          var res = await http.get(
+              Uri.parse("$APIURL${parsed_url.path}/posts?o=$nextquery"),
+              headers: {'Accept': 'text/css'});
+
+          var responseData = jsonDecode(res.body);
+
+          // Check if the response is an error object
+          if (responseData is Map && responseData.containsKey('error')) {
+            print("API Error in pagination: ${responseData['error']}");
+            break;
+          }
+
+          // Ensure we have a List response
+          if (responseData is! List) {
+            print(
+                "Unexpected pagination response format: expected List, got ${responseData.runtimeType}");
+            break;
+          }
+
+          temp = responseData;
           if (temp.isEmpty) {
             break;
           } else {
@@ -57,13 +92,13 @@ class NeoCoomer {
           if (temFile.isNotEmpty) {
             download_file.add(DownloadItem(
                 downloadName: element['file']['name'],
-                link: "https://c1.coomer.su/data${element['file']['path']}"));
+                link: "https://coomer.st/data${element['file']['path']}"));
           }
           if (tempAttachments.isNotEmpty) {
             for (var e in tempAttachments) {
               download_file.add(DownloadItem(
                   downloadName: e['name'],
-                  link: "https://c1.coomer.su/data${e['path']}"));
+                  link: "https://coomer.st/data${e['path']}"));
             }
           }
         }
@@ -72,43 +107,60 @@ class NeoCoomer {
           "creator": content.first['user'] ?? const Uuid().v1(),
           "downloads": download_file,
           "count": download_file.length,
-          "folder":
-              content.first['user'].replaceAll(r'[\\\/:"*?<>|]+', "_").trim() ??
-                  const Uuid().v1()
+          "folder": (content.first['user']
+                  ?.replaceAll(r'[\\\/:"*?<>|]+', "_")
+                  .trim()) ??
+              const Uuid().v1()
         };
       } else {
-        print("POST");
-        var res = await http.get(Uri.parse("$APIURL${parsed_url.path}"));
-        print(res.statusCode);
-        print(Uri.parse("$APIURL${parsed_url.path}").path);
+        print("SINGLE POST");
+        // Single post URL transformation
+        // From: /onlyfans/user/username/post/123456
+        // To:   /api/v1/onlyfans/user/username/post/123456
+        String singlePostPath = parsed_url.path;
+        print("Requesting: $APIURL$singlePostPath");
+        var res = await http.get(Uri.parse("$APIURL$singlePostPath"),
+            headers: {'Accept': 'text/css'});
+        print("Response status: ${res.statusCode}");
+        print("Full URL: ${Uri.parse("$APIURL$singlePostPath")}");
         if (res.statusCode == 200) {
           Map content = jsonDecode(res.body);
           print(content.length);
           if (content.isNotEmpty) {
-            Map files = content['file'];
-            List attachments = content['attachments'];
-            if (files.isNotEmpty) {
+            // For single posts, the data is nested under 'post'
+            Map? postData = content['post'];
+            if (postData == null) {
+              return Future.error("No post data found");
+            }
+
+            Map? files = postData['file'];
+            List? attachments =
+                postData['attachments']; // Attachments are nested under 'post'
+
+            if (files != null && files.isNotEmpty) {
               download_file.add(DownloadItem(
                   downloadName: files['name'],
-                  link: "https://c1.coomer.su/data${files['path']}"));
+                  link: "https://coomer.st/data${files['path']}"));
             }
-            if (attachments.isNotEmpty) {
+            if (attachments != null && attachments.isNotEmpty) {
               for (var e in attachments) {
                 download_file.add(DownloadItem(
                     downloadName: e['name'],
-                    link: "https://c1.coomer.su/data${e['path']}"));
+                    link: "https://coomer.st/data${e['path']}"));
               }
             }
 
+            String username = postData['user'] ?? const Uuid().v1();
+            String publishedDate =
+                postData['published']?.toString().split('T').first ?? 'unknown';
+
             return {
-              "creator": content['user'] ?? const Uuid().v1(),
+              "creator": username,
               "downloads": download_file,
               "count": download_file.length,
-              "folder":
-                  ("(Post ${content['published'].toString().split('T').first}) ${content['user']}")
-                          .replaceAll(r'[\\\/:"*?<>|]+', "_")
-                          .trim() ??
-                      const Uuid().v1()
+              "folder": ("(Post $publishedDate) $username")
+                  .replaceAll(r'[\\\/:"*?<>|]+', "_")
+                  .trim()
             };
           } else {
             return Future.error("Content is Empty");
