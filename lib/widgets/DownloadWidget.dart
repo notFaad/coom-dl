@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'package:coom_dl/data/models/DlTask.dart';
 import 'package:coom_dl/utils/FileSizeConverter.dart';
 import 'package:flutter/material.dart';
@@ -5,6 +6,7 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:get/get.dart';
 import 'package:isar/isar.dart';
 import 'package:url_launcher/url_launcher_string.dart';
+import 'package:desktop_multi_window/desktop_multi_window.dart';
 
 import '../constant/appcolors.dart';
 
@@ -45,6 +47,42 @@ class _DownloadWidgetState extends State<DownloadWidget> {
       return 'unknown';
     } catch (e) {
       return 'unknown';
+    }
+  }
+
+  // Open Gallery Window for this download
+  Future<void> _openGalleryWindow() async {
+    try {
+      final window = await DesktopMultiWindow.createWindow(jsonEncode({
+        'name': 'gallery',
+        'downloadId': widget.task.id,
+        'downloadName': widget.task.name,
+        'downloadPath': '${widget.task.storagePath}/${widget.task.name}',
+      }));
+
+      window
+        ..setFrame(const Offset(100, 100) & const Size(800, 600))
+        ..center()
+        ..setTitle('Gallery - ${widget.task.name}')
+        ..show();
+    } catch (e) {
+      print('Failed to open gallery window: $e');
+      // Fallback: Show dialog for now
+      Get.dialog(AlertDialog(
+        backgroundColor: Appcolors.appAccentColor,
+        title: Text('Gallery Feature',
+            style: TextStyle(
+                color: Appcolors.appPrimaryColor, fontWeight: FontWeight.w500)),
+        content: Text(
+            'Gallery window coming soon!\nDownload ID: ${widget.task.id}',
+            style: TextStyle(color: Appcolors.appPrimaryColor)),
+        actions: [
+          TextButton(
+              onPressed: () => Get.back(),
+              child:
+                  Text('OK', style: TextStyle(color: Appcolors.appLogoColor)))
+        ],
+      ));
     }
   }
 
@@ -327,6 +365,33 @@ class _DownloadWidgetState extends State<DownloadWidget> {
                                   Icons.folder_rounded,
                                   size: 14,
                                 ))),
+                            const SizedBox(
+                              width: 10,
+                            ),
+                            // Gallery Button
+                            IconButton(
+                                style: IconButton.styleFrom(
+                                    hoverColor:
+                                        Colors.purple[400]!.withOpacity(0.2),
+                                    foregroundColor: Colors.purple[400],
+                                    backgroundColor:
+                                        Colors.purple[400]!.withOpacity(0.1),
+                                    side: BorderSide(
+                                      color:
+                                          Colors.purple[400]!.withOpacity(0.2),
+                                      width: 1,
+                                    ),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(8),
+                                    )),
+                                onPressed: () async {
+                                  // Open Gallery Window
+                                  await _openGalleryWindow();
+                                },
+                                icon: const Icon(
+                                  Icons.photo_library_rounded,
+                                  size: 14,
+                                )),
                             const SizedBox(
                               width: 10,
                             ),

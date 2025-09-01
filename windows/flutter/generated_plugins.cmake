@@ -3,9 +3,11 @@
 #
 
 list(APPEND FLUTTER_PLUGIN_LIST
+  desktop_multi_window
   file_selector_windows
   isar_flutter_libs
   screen_retriever_windows
+  share_plus
   url_launcher_windows
   window_manager
 )

@@ -2,6 +2,9 @@ import 'package:coom_dl/constant/appcolors.dart';
 import 'package:flutter/material.dart';
 import 'package:hive/hive.dart';
 import 'package:get/get.dart';
+import 'package:desktop_multi_window/desktop_multi_window.dart';
+import 'dart:convert';
+import 'debugMonitor.dart';
 
 class SettingsPage extends StatefulWidget {
   final Box settingsBox;
@@ -39,8 +42,8 @@ class _SettingsPageState extends State<SettingsPage> {
     if (!settings.containsKey('retry')) {
       widget.settingsBox.put('retry', 3);
     }
-    if (!settings.containsKey('debug')) {
-      widget.settingsBox.put('debug', false);
+    if (!settings.containsKey('debugMode')) {
+      widget.settingsBox.put('debugMode', false);
     }
     settings = widget.settingsBox.toMap();
   }
@@ -179,6 +182,10 @@ class _SettingsPageState extends State<SettingsPage> {
           _buildSectionHeader('Debug Mode'),
           const SizedBox(height: 12),
           _buildDebugSwitch(),
+          if (settings['debugMode'] == true) ...[
+            const SizedBox(height: 12),
+            _buildMonitorButton(),
+          ],
         ],
       ),
     );
@@ -395,12 +402,12 @@ class _SettingsPageState extends State<SettingsPage> {
             style: TextStyle(color: Appcolors.appTextColor, fontSize: 14)),
         subtitle: const Text('Enable detailed logging',
             style: TextStyle(color: Appcolors.appTextColor, fontSize: 11)),
-        value: settings['debug'] ?? false,
+        value: settings['debugMode'] ?? false,
         activeColor: Appcolors.appPrimaryColor,
         contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
         onChanged: (value) {
           setState(() {
-            widget.settingsBox.put('debug', value);
+            widget.settingsBox.put('debugMode', value);
             settings = widget.settingsBox.toMap();
           });
           _showAutoSaveNotification(
@@ -421,7 +428,7 @@ class _SettingsPageState extends State<SettingsPage> {
           _buildInfoRow('Current Engine', _getCurrentEngineName()),
           _buildInfoRow('Active Jobs', '${settings['job'] ?? 5}'),
           _buildInfoRow('Debug Status',
-              settings['debug'] == true ? 'Enabled' : 'Disabled'),
+              settings['debugMode'] == true ? 'Enabled' : 'Disabled'),
           const SizedBox(height: 16),
           Container(
             padding: const EdgeInsets.all(10),
@@ -510,6 +517,47 @@ class _SettingsPageState extends State<SettingsPage> {
         borderRadius: 8,
         icon: const Icon(Icons.check_circle, color: Colors.white, size: 20),
         maxWidth: 300,
+      ),
+    );
+  }
+
+  Widget _buildMonitorButton() {
+    return Container(
+      width: double.infinity,
+      child: ElevatedButton.icon(
+        onPressed: () async {
+          try {
+            final window = await DesktopMultiWindow.createWindow(jsonEncode({
+              'route': '/debug_monitor',
+              'title': 'Debug Monitor',
+            }));
+
+            window
+              ..setFrame(const Offset(100, 100) & const Size(1200, 800))
+              ..setTitle('COOM-DL Debug Monitor')
+              ..show();
+
+            _showAutoSaveNotification('Debug monitor window opened');
+          } catch (e) {
+            // Fallback to normal navigation if multi-window fails
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => const DebugMonitorPage(),
+              ),
+            );
+          }
+        },
+        icon: const Icon(Icons.monitor_heart, size: 18),
+        label: const Text('Open Debug Monitor'),
+        style: ElevatedButton.styleFrom(
+          backgroundColor: Appcolors.appAccentColor,
+          foregroundColor: Colors.white,
+          padding: const EdgeInsets.symmetric(vertical: 12),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(8),
+          ),
+        ),
       ),
     );
   }

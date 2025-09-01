@@ -5,6 +5,7 @@ import 'package:uuid/uuid.dart';
 
 class NeoCoomer {
   static var APIURL = "https://coomer.st/api/v1";
+  static var DATAURL = "https://coomer.st/data";
 
   static Future<Map<String, dynamic>> init({required url}) async {
     Uri parsed_url = Uri.parse(url);
@@ -17,6 +18,7 @@ class NeoCoomer {
               r'^((https:\/\/)|(https:\/\/www\.))?kemono\.(party|su|cr){1}\/.+$')
           .hasMatch(url)) {
         APIURL = "https://kemono.cr/api/v1";
+        DATAURL = "https://kemono.cr/data";
       }
       if (!RegExp(r'(post)\/\d+$').hasMatch(url)) {
         print(parsed_url.query);
@@ -87,18 +89,32 @@ class NeoCoomer {
         }
 
         for (var element in content) {
-          List tempAttachments = element['attachments'];
-          Map temFile = element['file'];
-          if (temFile.isNotEmpty) {
-            download_file.add(DownloadItem(
-                downloadName: element['file']['name'],
-                link: "https://coomer.st/data${element['file']['path']}"));
-          }
-          if (tempAttachments.isNotEmpty) {
-            for (var e in tempAttachments) {
+          // Safely handle attachments
+          List? tempAttachments = element['attachments'] as List?;
+          Map? temFile = element['file'] as Map?;
+
+          // Add main file if it exists
+          if (temFile != null && temFile.isNotEmpty) {
+            String? fileName = temFile['name'];
+            String? filePath = temFile['path'];
+            if (fileName != null && filePath != null) {
               download_file.add(DownloadItem(
-                  downloadName: e['name'],
-                  link: "https://coomer.st/data${e['path']}"));
+                  downloadName: fileName, link: "$DATAURL$filePath"));
+            }
+          }
+
+          // Add attachments if they exist
+          if (tempAttachments != null && tempAttachments.isNotEmpty) {
+            for (var e in tempAttachments) {
+              if (e is Map) {
+                String? attachmentName = e['name'];
+                String? attachmentPath = e['path'];
+                if (attachmentName != null && attachmentPath != null) {
+                  download_file.add(DownloadItem(
+                      downloadName: attachmentName,
+                      link: "$DATAURL$attachmentPath"));
+                }
+              }
             }
           }
         }
@@ -140,13 +156,12 @@ class NeoCoomer {
             if (files != null && files.isNotEmpty) {
               download_file.add(DownloadItem(
                   downloadName: files['name'],
-                  link: "https://coomer.st/data${files['path']}"));
+                  link: "$DATAURL${files['path']}"));
             }
             if (attachments != null && attachments.isNotEmpty) {
               for (var e in attachments) {
                 download_file.add(DownloadItem(
-                    downloadName: e['name'],
-                    link: "https://coomer.st/data${e['path']}"));
+                    downloadName: e['name'], link: "$DATAURL${e['path']}"));
               }
             }
 
