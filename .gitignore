@@ -44,3 +44,6 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
+coomdl-installer.dmg
+dmg_temp/
+build/

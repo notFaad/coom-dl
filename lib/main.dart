@@ -108,7 +108,7 @@ Future<void> main(List<String> args) async {
     center: true,
     titleBarStyle: TitleBarStyle.normal,
   );
-  double current_version = 0.75;
+  double current_version = 0.92;
   bool hasNewVersion = false;
   double? newV = 0;
 
@@ -136,7 +136,8 @@ Future<void> main(List<String> args) async {
     }
     // await windowManager.setMaximumSize(const Size(800, 500));
     // await windowManager.setMinimumSize(const Size(800, 500));
-    await windowManager.setTitle("CNEX 0.84 beta | by notFaad");
+    await windowManager
+        .setTitle("0.92 beta| CNEX(previously coomdl) | by notFaad");
     //  await windowManager.setMaximizable(false);
     await windowManager.setTitleBarStyle(TitleBarStyle.normal);
     await windowManager.setPreventClose(true);
@@ -306,7 +307,8 @@ class _MyAppState extends State<MyApp> with WindowListener {
     super.initState();
     downloadLogListner.stream.listen((event) {
       setState(() {
-        logs = event;
+        // Merge new download data instead of replacing entire logs map
+        logs.addAll(event);
       });
     });
 

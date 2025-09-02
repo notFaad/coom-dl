@@ -34,6 +34,9 @@ class DownloadTask {
   //number of failed files
   int numFailed = 0;
 
+  //number of retry attempts
+  int numRetries = 0;
+
   //is the task completed?
   bool? isCompleted;
 

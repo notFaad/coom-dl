@@ -9,6 +9,7 @@ import 'package:url_launcher/url_launcher_string.dart';
 import 'package:desktop_multi_window/desktop_multi_window.dart';
 
 import '../constant/appcolors.dart';
+import 'MiniPerformanceChart.dart';
 
 class DownloadWidget extends StatefulWidget {
   DownloadTask task;
@@ -246,15 +247,33 @@ class _DownloadWidgetState extends State<DownloadWidget> {
                                 width: 1,
                               ),
                             ),
-                            child: Center(
-                                child: Text(
-                                    "${widget.task.tag ?? "No Tag"}", // <- Site match here
+                            child: Center(child: Builder(builder: (context) {
+                              if (widget.task.isDownloading ?? false) {
+                                return MiniPerformanceChart(
+                                  key: ValueKey('perf_${widget.task.id}'),
+                                  downloadInfo: widget.downloadinfo,
+                                  isDownloading:
+                                      widget.task.isDownloading ?? false,
+                                  downloadedBytes: widget.task.downloadedBytes,
+                                );
+                              } else if (widget.task.tag != null) {
+                                return Text("${widget.task.tag}",
                                     overflow: TextOverflow.ellipsis,
                                     textAlign: TextAlign.center,
                                     style: const TextStyle(
                                         fontWeight: FontWeight.w600,
                                         color: Appcolors.appPrimaryColor,
-                                        fontSize: 9))))),
+                                        fontSize: 9));
+                              } else {
+                                return Text("No Tag",
+                                    overflow: TextOverflow.ellipsis,
+                                    textAlign: TextAlign.center,
+                                    style: const TextStyle(
+                                        fontWeight: FontWeight.w600,
+                                        color: Appcolors.appPrimaryColor,
+                                        fontSize: 9));
+                              }
+                            })))),
                     const Spacer(),
                     Container(
                       margin: const EdgeInsets.all(8),
@@ -483,13 +502,13 @@ class _DownloadWidgetState extends State<DownloadWidget> {
                         } else {
                           return Text(
                             overflow: TextOverflow.ellipsis,
-                            "[ ${widget.downloadinfo["total"]} / ${widget.task.totalNum} ] | OK: ${widget.downloadinfo["ok"]} | FAIL: ${widget.downloadinfo["fail"]} | ${(() {
+                            "[ ${widget.downloadinfo["total"] ?? 0} / ${widget.task.totalNum ?? 0} ] | OK: ${widget.downloadinfo["ok"] ?? 0} | FAIL: ${widget.downloadinfo["fail"] ?? 0} | RETRY: ${widget.downloadinfo["retries"] ?? 0} | ${(() {
                               final total = widget.task.totalNum ?? 0;
                               final current = widget.downloadinfo["total"] ?? 0;
                               if (total == 0) return "0.0";
                               return ((current / total) * 100)
                                   .toStringAsFixed(1);
-                            })()} % | ${FileSizeConverter.getFileSizeString(bytes: widget.downloadinfo["size"])}",
+                            })()} % | ${FileSizeConverter.getFileSizeString(bytes: widget.downloadinfo["size"] ?? 0)}",
                             style: TextStyle(
                                 color: Appcolors.appPrimaryColor,
                                 fontSize: 12,
@@ -534,7 +553,7 @@ class _DownloadWidgetState extends State<DownloadWidget> {
                         color: Appcolors.appPrimaryColor,
                       ),
                     ),
-                  )
+                  ),
                 ]
               ],
             ))
