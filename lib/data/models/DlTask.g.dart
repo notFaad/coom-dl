@@ -72,28 +72,33 @@ const DownloadTaskSchema = CollectionSchema(
       name: r'numFetched',
       type: IsarType.long,
     ),
-    r'pathToThumbnail': PropertySchema(
+    r'numRetries': PropertySchema(
       id: 11,
+      name: r'numRetries',
+      type: IsarType.long,
+    ),
+    r'pathToThumbnail': PropertySchema(
+      id: 12,
       name: r'pathToThumbnail',
       type: IsarType.string,
     ),
     r'storagePath': PropertySchema(
-      id: 12,
+      id: 13,
       name: r'storagePath',
       type: IsarType.string,
     ),
     r'tag': PropertySchema(
-      id: 13,
+      id: 14,
       name: r'tag',
       type: IsarType.string,
     ),
     r'totalNum': PropertySchema(
-      id: 14,
+      id: 15,
       name: r'totalNum',
       type: IsarType.long,
     ),
     r'url': PropertySchema(
-      id: 15,
+      id: 16,
       name: r'url',
       type: IsarType.string,
     )
@@ -165,11 +170,12 @@ void _downloadTaskSerialize(
   writer.writeLong(offsets[8], object.numCompleted);
   writer.writeLong(offsets[9], object.numFailed);
   writer.writeLong(offsets[10], object.numFetched);
-  writer.writeString(offsets[11], object.pathToThumbnail);
-  writer.writeString(offsets[12], object.storagePath);
-  writer.writeString(offsets[13], object.tag);
-  writer.writeLong(offsets[14], object.totalNum);
-  writer.writeString(offsets[15], object.url);
+  writer.writeLong(offsets[11], object.numRetries);
+  writer.writeString(offsets[12], object.pathToThumbnail);
+  writer.writeString(offsets[13], object.storagePath);
+  writer.writeString(offsets[14], object.tag);
+  writer.writeLong(offsets[15], object.totalNum);
+  writer.writeString(offsets[16], object.url);
 }
 
 DownloadTask _downloadTaskDeserialize(
@@ -191,11 +197,12 @@ DownloadTask _downloadTaskDeserialize(
   object.numCompleted = reader.readLong(offsets[8]);
   object.numFailed = reader.readLong(offsets[9]);
   object.numFetched = reader.readLong(offsets[10]);
-  object.pathToThumbnail = reader.readStringOrNull(offsets[11]);
-  object.storagePath = reader.readString(offsets[12]);
-  object.tag = reader.readStringOrNull(offsets[13]);
-  object.totalNum = reader.readLongOrNull(offsets[14]);
-  object.url = reader.readString(offsets[15]);
+  object.numRetries = reader.readLong(offsets[11]);
+  object.pathToThumbnail = reader.readStringOrNull(offsets[12]);
+  object.storagePath = reader.readString(offsets[13]);
+  object.tag = reader.readStringOrNull(offsets[14]);
+  object.totalNum = reader.readLongOrNull(offsets[15]);
+  object.url = reader.readString(offsets[16]);
   return object;
 }
 
@@ -229,14 +236,16 @@ P _downloadTaskDeserializeProp<P>(
     case 10:
       return (reader.readLong(offset)) as P;
     case 11:
-      return (reader.readStringOrNull(offset)) as P;
+      return (reader.readLong(offset)) as P;
     case 12:
-      return (reader.readString(offset)) as P;
-    case 13:
       return (reader.readStringOrNull(offset)) as P;
+    case 13:
+      return (reader.readString(offset)) as P;
     case 14:
-      return (reader.readLongOrNull(offset)) as P;
+      return (reader.readStringOrNull(offset)) as P;
     case 15:
+      return (reader.readLongOrNull(offset)) as P;
+    case 16:
       return (reader.readString(offset)) as P;
     default:
       throw IsarError('Unknown property with id $propertyId');
@@ -926,6 +935,62 @@ extension DownloadTaskQueryFilter
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(FilterCondition.between(
         property: r'numFetched',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
+      ));
+    });
+  }
+
+  QueryBuilder<DownloadTask, DownloadTask, QAfterFilterCondition>
+      numRetriesEqualTo(int value) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'numRetries',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<DownloadTask, DownloadTask, QAfterFilterCondition>
+      numRetriesGreaterThan(
+    int value, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'numRetries',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<DownloadTask, DownloadTask, QAfterFilterCondition>
+      numRetriesLessThan(
+    int value, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'numRetries',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<DownloadTask, DownloadTask, QAfterFilterCondition>
+      numRetriesBetween(
+    int lower,
+    int upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'numRetries',
         lower: lower,
         includeLower: includeLower,
         upper: upper,
@@ -1788,6 +1853,19 @@ extension DownloadTaskQuerySortBy
     });
   }
 
+  QueryBuilder<DownloadTask, DownloadTask, QAfterSortBy> sortByNumRetries() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'numRetries', Sort.asc);
+    });
+  }
+
+  QueryBuilder<DownloadTask, DownloadTask, QAfterSortBy>
+      sortByNumRetriesDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'numRetries', Sort.desc);
+    });
+  }
+
   QueryBuilder<DownloadTask, DownloadTask, QAfterSortBy>
       sortByPathToThumbnail() {
     return QueryBuilder.apply(this, (query) {
@@ -2005,6 +2083,19 @@ extension DownloadTaskQuerySortThenBy
     });
   }
 
+  QueryBuilder<DownloadTask, DownloadTask, QAfterSortBy> thenByNumRetries() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'numRetries', Sort.asc);
+    });
+  }
+
+  QueryBuilder<DownloadTask, DownloadTask, QAfterSortBy>
+      thenByNumRetriesDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'numRetries', Sort.desc);
+    });
+  }
+
   QueryBuilder<DownloadTask, DownloadTask, QAfterSortBy>
       thenByPathToThumbnail() {
     return QueryBuilder.apply(this, (query) {
@@ -2140,6 +2231,12 @@ extension DownloadTaskQueryWhereDistinct
     });
   }
 
+  QueryBuilder<DownloadTask, DownloadTask, QDistinct> distinctByNumRetries() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'numRetries');
+    });
+  }
+
   QueryBuilder<DownloadTask, DownloadTask, QDistinct> distinctByPathToThumbnail(
       {bool caseSensitive = true}) {
     return QueryBuilder.apply(this, (query) {
@@ -2247,6 +2344,12 @@ extension DownloadTaskQueryProperty
   QueryBuilder<DownloadTask, int, QQueryOperations> numFetchedProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'numFetched');
+    });
+  }
+
+  QueryBuilder<DownloadTask, int, QQueryOperations> numRetriesProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'numRetries');
     });
   }
 

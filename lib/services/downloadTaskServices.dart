@@ -22,6 +22,7 @@ class DownloadTaskServices {
     int size = 0;
     int fail = 0;
     int fetch = 0;
+    int retryCount = 0;
     await CybCrawl.getFileContent(
       downloadID: task.id,
       url: task.url,
@@ -50,6 +51,7 @@ class DownloadTaskServices {
             int completedLinks = 0;
             int failedLinks = 0;
             int totalFetched = 0;
+            int totalRetries = 0;
             List<Links> linksList = [];
             for (int i = 0; i < logger.length; i++) {
               if (logger[i][0]['status'] == "ok") {
@@ -58,12 +60,15 @@ class DownloadTaskServices {
                     .firstWhere((element) => element.id == logger[i][0]['id']);
                 link.isCompleted = true;
                 linksList.add(link);
-              } else if (logger[i][0]['status'] == "fail") {
+              } else if (logger[i][0]['status'] == "fail" ||
+                  logger[i][0]['status'] == "error") {
                 failedLinks++;
                 var link = temp.links
                     .firstWhere((element) => element.id == logger[i][0]['id']);
                 link.isFailure = true;
                 linksList.add(link);
+              } else if (logger[i][0]['status'] == "retry") {
+                totalRetries++;
               }
               if (i == logger.length - 1) {
                 totalFetched = logger[i][1];
@@ -72,6 +77,8 @@ class DownloadTaskServices {
 
             temp.numFetched = totalFetched;
             temp.numCompleted = completedLinks;
+            temp.numFailed = failedLinks;
+            temp.numRetries = totalRetries;
             temp.isCompleted = true;
             temp.isDownloading = false;
             temp.links.clear();
@@ -115,17 +122,31 @@ class DownloadTaskServices {
         if (val[0]['status'] == "ok") {
           completed++;
           size += val[0]['size'] as int;
-        } else if (val[0]['status'] == "fail") {
+        } else if (val[0]['status'] == "fail" || val[0]['status'] == "error") {
           fail++;
+        } else if (val[0]['status'] == "retry") {
+          retryCount++;
         }
 
         logger.add(val);
         //send to stream
         print({
-          task.id: {"ok": completed, "fail": fail, "size": size, "total": fetch}
+          task.id: {
+            "ok": completed,
+            "fail": fail,
+            "size": size,
+            "total": fetch,
+            "retries": retryCount
+          }
         });
         SendLogs.add({
-          task.id: {"ok": completed, "fail": fail, "size": size, "total": fetch}
+          task.id: {
+            "ok": completed,
+            "fail": fail,
+            "size": size,
+            "total": fetch,
+            "retries": retryCount
+          }
         });
 // TODO: REWRITE TO MEM FETCHING
       },

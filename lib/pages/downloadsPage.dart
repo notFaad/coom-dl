@@ -109,29 +109,19 @@ class _DownloadsPageState extends State<DownloadsPage> {
                                         shrinkWrap: true,
                                         itemCount: tasks.length,
                                         itemBuilder: (content, index) {
-                                          if (widget.downloadlog.isNotEmpty) {
-                                            if (widget.downloadlog.keys.first ==
-                                                tasks[index].id) {
-                                              return DownloadWidget(
-                                                isar: widget.isar,
-                                                task: tasks[index],
-                                                downloadinfo: widget
-                                                    .downloadlog.values.first,
-                                              );
-                                            } else {
-                                              return DownloadWidget(
-                                                isar: widget.isar,
-                                                task: tasks[index],
-                                                downloadinfo: const {},
-                                              );
-                                            }
-                                          } else {
-                                            return DownloadWidget(
-                                              isar: widget.isar,
-                                              task: tasks[index],
-                                              downloadinfo: const {},
-                                            );
-                                          }
+                                          final taskId = tasks[index].id;
+                                          final taskDownloadInfo =
+                                              Map<String, dynamic>.from(
+                                                  widget.downloadlog[taskId]
+                                                          as Map<dynamic,
+                                                              dynamic>? ??
+                                                      {});
+
+                                          return DownloadWidget(
+                                            isar: widget.isar,
+                                            task: tasks[index],
+                                            downloadinfo: taskDownloadInfo,
+                                          );
                                         });
                                   } else {
                                     return const Center(
@@ -171,29 +161,19 @@ class _DownloadsPageState extends State<DownloadsPage> {
                                         shrinkWrap: true,
                                         itemCount: tasks.length,
                                         itemBuilder: (content, index) {
-                                          if (widget.downloadlog.isNotEmpty) {
-                                            if (widget.downloadlog.keys.first ==
-                                                tasks[index].id) {
-                                              return DownloadWidget(
-                                                isar: widget.isar,
-                                                task: tasks[index],
-                                                downloadinfo: widget
-                                                    .downloadlog.values.first,
-                                              );
-                                            } else {
-                                              return DownloadWidget(
-                                                isar: widget.isar,
-                                                task: tasks[index],
-                                                downloadinfo: const {},
-                                              );
-                                            }
-                                          } else {
-                                            return DownloadWidget(
-                                              isar: widget.isar,
-                                              task: tasks[index],
-                                              downloadinfo: const {},
-                                            );
-                                          }
+                                          final taskId = tasks[index].id;
+                                          final taskDownloadInfo =
+                                              Map<String, dynamic>.from(
+                                                  widget.downloadlog[taskId]
+                                                          as Map<dynamic,
+                                                              dynamic>? ??
+                                                      {});
+
+                                          return DownloadWidget(
+                                            isar: widget.isar,
+                                            task: tasks[index],
+                                            downloadinfo: taskDownloadInfo,
+                                          );
                                         });
                                   } else {
                                     return const Center(
@@ -232,29 +212,19 @@ class _DownloadsPageState extends State<DownloadsPage> {
                                         shrinkWrap: true,
                                         itemCount: tasks.length,
                                         itemBuilder: (content, index) {
-                                          if (widget.downloadlog.isNotEmpty) {
-                                            if (widget.downloadlog.keys.first ==
-                                                tasks[index].id) {
-                                              return DownloadWidget(
-                                                isar: widget.isar,
-                                                task: tasks[index],
-                                                downloadinfo: widget
-                                                    .downloadlog.values.first,
-                                              );
-                                            } else {
-                                              return DownloadWidget(
-                                                isar: widget.isar,
-                                                task: tasks[index],
-                                                downloadinfo: const {},
-                                              );
-                                            }
-                                          } else {
-                                            return DownloadWidget(
-                                              isar: widget.isar,
-                                              task: tasks[index],
-                                              downloadinfo: const {},
-                                            );
-                                          }
+                                          final taskId = tasks[index].id;
+                                          final taskDownloadInfo =
+                                              Map<String, dynamic>.from(
+                                                  widget.downloadlog[taskId]
+                                                          as Map<dynamic,
+                                                              dynamic>? ??
+                                                      {});
+
+                                          return DownloadWidget(
+                                            isar: widget.isar,
+                                            task: tasks[index],
+                                            downloadinfo: taskDownloadInfo,
+                                          );
                                         });
                                   } else {
                                     return const Center(

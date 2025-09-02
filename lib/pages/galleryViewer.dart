@@ -1406,101 +1406,225 @@ class _FullscreenImageViewer extends StatefulWidget {
 class _FullscreenImageViewerState extends State<_FullscreenImageViewer> {
   late PageController _pageController;
   int _currentIndex = 0;
+  final FocusNode _focusNode = FocusNode();
 
   @override
   void initState() {
     super.initState();
     _currentIndex = widget.initialIndex;
     _pageController = PageController(initialPage: widget.initialIndex);
+
+    // Request focus for keyboard navigation
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _focusNode.requestFocus();
+    });
+  }
+
+  void _handleKeyEvent(KeyEvent event) {
+    if (event is KeyDownEvent) {
+      switch (event.logicalKey) {
+        case LogicalKeyboardKey.arrowRight:
+        case LogicalKeyboardKey.arrowDown:
+          _navigateToNext();
+          break;
+        case LogicalKeyboardKey.arrowLeft:
+        case LogicalKeyboardKey.arrowUp:
+          _navigateToPrevious();
+          break;
+        case LogicalKeyboardKey.escape:
+          widget.onClose();
+          break;
+        case LogicalKeyboardKey.space:
+          _navigateToNext();
+          break;
+      }
+    }
+  }
+
+  void _navigateToNext() {
+    if (_currentIndex < widget.imagePaths.length - 1) {
+      _pageController.nextPage(
+        duration: Duration(milliseconds: 300),
+        curve: Curves.easeInOut,
+      );
+    }
+  }
+
+  void _navigateToPrevious() {
+    if (_currentIndex > 0) {
+      _pageController.previousPage(
+        duration: Duration(milliseconds: 300),
+        curve: Curves.easeInOut,
+      );
+    }
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.black,
-      body: Stack(
-        children: [
-          PhotoViewGallery.builder(
-            pageController: _pageController,
-            itemCount: widget.imagePaths.length,
-            builder: (context, index) {
-              return PhotoViewGalleryPageOptions(
-                imageProvider: FileImage(File(widget.imagePaths[index])),
-                initialScale: PhotoViewComputedScale.contained,
-                minScale: PhotoViewComputedScale.contained * 0.5,
-                maxScale: PhotoViewComputedScale.covered * 3,
-                heroAttributes:
-                    PhotoViewHeroAttributes(tag: widget.imagePaths[index]),
-              );
-            },
-            onPageChanged: (index) {
-              setState(() {
-                _currentIndex = index;
-              });
-            },
-            backgroundDecoration: BoxDecoration(color: Colors.black),
-            loadingBuilder: (context, event) => Center(
-              child: CircularProgressIndicator(
-                color: Appcolors.appLogoColor,
-                value: event == null
-                    ? 0
-                    : event.cumulativeBytesLoaded / event.expectedTotalBytes!,
+    return Focus(
+      focusNode: _focusNode,
+      onKeyEvent: (node, event) {
+        _handleKeyEvent(event);
+        return KeyEventResult.handled;
+      },
+      child: Scaffold(
+        backgroundColor: Colors.black,
+        body: Stack(
+          children: [
+            PhotoViewGallery.builder(
+              pageController: _pageController,
+              itemCount: widget.imagePaths.length,
+              builder: (context, index) {
+                return PhotoViewGalleryPageOptions(
+                  imageProvider: FileImage(File(widget.imagePaths[index])),
+                  initialScale: PhotoViewComputedScale.contained,
+                  minScale: PhotoViewComputedScale.contained * 0.5,
+                  maxScale: PhotoViewComputedScale.covered * 3,
+                  heroAttributes:
+                      PhotoViewHeroAttributes(tag: widget.imagePaths[index]),
+                );
+              },
+              onPageChanged: (index) {
+                setState(() {
+                  _currentIndex = index;
+                });
+              },
+              backgroundDecoration: BoxDecoration(color: Colors.black),
+              loadingBuilder: (context, event) => Center(
+                child: CircularProgressIndicator(
+                  color: Appcolors.appLogoColor,
+                  value: event == null
+                      ? 0
+                      : event.cumulativeBytesLoaded / event.expectedTotalBytes!,
+                ),
               ),
             ),
-          ),
-          // Top Controls
-          Positioned(
-            top: 40,
-            left: 0,
-            right: 0,
-            child: Container(
-              padding: EdgeInsets.symmetric(horizontal: 16),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  IconButton(
-                    onPressed: widget.onClose,
-                    icon: Icon(Icons.close, color: Colors.white, size: 28),
+            // Left Navigation Arrow
+            if (_currentIndex > 0)
+              Positioned(
+                left: 20,
+                top: 0,
+                bottom: 0,
+                child: Center(
+                  child: GestureDetector(
+                    onTap: _navigateToPrevious,
+                    child: Container(
+                      padding: EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: Colors.black54,
+                        borderRadius: BorderRadius.circular(25),
+                      ),
+                      child: Icon(
+                        Icons.arrow_back_ios,
+                        color: Colors.white,
+                        size: 24,
+                      ),
+                    ),
                   ),
-                  Text(
-                    '${_currentIndex + 1} / ${widget.imagePaths.length}',
-                    style: TextStyle(color: Colors.white, fontSize: 16),
+                ),
+              ),
+            // Right Navigation Arrow
+            if (_currentIndex < widget.imagePaths.length - 1)
+              Positioned(
+                right: 20,
+                top: 0,
+                bottom: 0,
+                child: Center(
+                  child: GestureDetector(
+                    onTap: _navigateToNext,
+                    child: Container(
+                      padding: EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: Colors.black54,
+                        borderRadius: BorderRadius.circular(25),
+                      ),
+                      child: Icon(
+                        Icons.arrow_forward_ios,
+                        color: Colors.white,
+                        size: 24,
+                      ),
+                    ),
                   ),
-                  IconButton(
-                    onPressed: () async {
-                      await Share.shareXFiles(
-                          [XFile(widget.imagePaths[_currentIndex])]);
-                    },
-                    icon: Icon(Icons.share, color: Colors.white, size: 28),
+                ),
+              ),
+            // Keyboard Instructions (appears briefly)
+            Positioned(
+              bottom: 100,
+              left: 0,
+              right: 0,
+              child: Center(
+                child: Container(
+                  padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  decoration: BoxDecoration(
+                    color: Colors.black54,
+                    borderRadius: BorderRadius.circular(20),
                   ),
-                ],
+                  child: Text(
+                    '← → Arrow keys to navigate • ESC to close • Space for next',
+                    style: TextStyle(
+                      color: Colors.white70,
+                      fontSize: 12,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                ),
               ),
             ),
-          ),
-          // Bottom Info
-          Positioned(
-            bottom: 40,
-            left: 0,
-            right: 0,
-            child: Container(
-              padding: EdgeInsets.symmetric(horizontal: 16),
-              child: Text(
-                path.basename(widget.imagePaths[_currentIndex]),
-                style: TextStyle(color: Colors.white, fontSize: 14),
-                textAlign: TextAlign.center,
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
+            // Top Controls
+            Positioned(
+              top: 40,
+              left: 0,
+              right: 0,
+              child: Container(
+                padding: EdgeInsets.symmetric(horizontal: 16),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    IconButton(
+                      onPressed: widget.onClose,
+                      icon: Icon(Icons.close, color: Colors.white, size: 28),
+                    ),
+                    Text(
+                      '${_currentIndex + 1} / ${widget.imagePaths.length}',
+                      style: TextStyle(color: Colors.white, fontSize: 16),
+                    ),
+                    IconButton(
+                      onPressed: () async {
+                        await Share.shareXFiles(
+                            [XFile(widget.imagePaths[_currentIndex])]);
+                      },
+                      icon: Icon(Icons.share, color: Colors.white, size: 28),
+                    ),
+                  ],
+                ),
               ),
             ),
-          ),
-        ],
-      ),
-    );
+            // Bottom Info
+            Positioned(
+              bottom: 40,
+              left: 0,
+              right: 0,
+              child: Container(
+                padding: EdgeInsets.symmetric(horizontal: 16),
+                child: Text(
+                  path.basename(widget.imagePaths[_currentIndex]),
+                  style: TextStyle(color: Colors.white, fontSize: 14),
+                  textAlign: TextAlign.center,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+            ),
+          ],
+        ), // Close Scaffold body Stack
+      ), // Close Scaffold
+    ); // Close Focus widget
   }
 
   @override
   void dispose() {
     _pageController.dispose();
+    _focusNode.dispose();
     super.dispose();
   }
 }
