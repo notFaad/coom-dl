@@ -215,30 +215,33 @@ class CybCrawl {
               direct.toString(),
               retry,
               () {
+                // isDownloadVideos: true for All Media (0) or Videos Only (1)
                 if (download_type == 0) {
-                  return true;
+                  return true; // All Media
                 } else if (download_type == 1) {
-                  return true;
+                  return true; // Videos Only
                 } else {
-                  return false;
+                  return false; // Pictures/Misc Only
                 }
               }(),
               () {
+                // isDownloadPictures: true for All Media (0) or Pictures Only (2)
                 if (download_type == 0) {
-                  return true;
+                  return true; // All Media
                 } else if (download_type == 2) {
-                  return true;
+                  return true; // Pictures Only
                 } else {
-                  return false;
+                  return false; // Videos/Misc Only
                 }
               }(),
               () {
+                // isDownloadMisc: true for All Media (0) or Misc Only (3)
                 if (download_type == 0) {
-                  return true;
+                  return true; // All Media
                 } else if (download_type == 3) {
-                  return true;
+                  return true; // Misc Only
                 } else {
-                  return false;
+                  return false; // Videos/Pictures Only
                 }
               }(),
               contents['folder'],
@@ -378,8 +381,11 @@ class CybCrawl {
           IsolateNameServer.lookupPortByName("single")?.send({
             'title': '$downloadName',
             'status': 'retry',
-            "finalsize": 162,
-            "size": await f.length()
+            'id': downloadID,
+            'retry_count': retry_count + 1,
+            'finalsize': 162,
+            'size': await f.length(),
+            'message': 'Retrying download due to incomplete file'
           });
         }
       }

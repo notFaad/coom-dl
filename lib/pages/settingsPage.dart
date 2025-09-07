@@ -45,6 +45,9 @@ class _SettingsPageState extends State<SettingsPage> {
     if (!settings.containsKey('debugMode')) {
       widget.settingsBox.put('debugMode', false);
     }
+    if (!settings.containsKey('organizeByMediaType')) {
+      widget.settingsBox.put('organizeByMediaType', true);
+    }
     settings = widget.settingsBox.toMap();
   }
 
@@ -98,6 +101,8 @@ class _SettingsPageState extends State<SettingsPage> {
                     const SizedBox(height: 16),
                     _buildPerformanceSection(),
                     const SizedBox(height: 16),
+                    _buildDownloadPreferencesSection(),
+                    const SizedBox(height: 16),
                     _buildDebugSection(),
                     const SizedBox(height: 16),
                     _buildSystemInfoSection(),
@@ -119,6 +124,8 @@ class _SettingsPageState extends State<SettingsPage> {
                         _buildEngineSection(),
                         const SizedBox(height: 16),
                         _buildPerformanceSection(),
+                        const SizedBox(height: 16),
+                        _buildDownloadPreferencesSection(),
                       ],
                     ),
                   ),
@@ -235,7 +242,12 @@ class _SettingsPageState extends State<SettingsPage> {
   }
 
   Widget _buildEngineSelector() {
-    final engines = ['Recooma Engine', 'Gallery-dl Engine', 'Cyberdrop Engine'];
+    final engines = [
+      'Recooma Engine',
+      'Gallery-dl Engine',
+      'Cyberdrop Engine',
+      'Catalyex Engine'
+    ];
     return Column(
       children: engines.asMap().entries.map((entry) {
         int index = entry.key;
@@ -417,6 +429,51 @@ class _SettingsPageState extends State<SettingsPage> {
     );
   }
 
+  Widget _buildDownloadPreferencesSection() {
+    return _buildGlassyCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _buildSectionHeader('Download Preferences'),
+          const SizedBox(height: 12),
+          _buildFolderOrganizationSwitch(),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildFolderOrganizationSwitch() {
+    return Container(
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(
+          color: Appcolors.appAccentColor.withOpacity(0.1),
+          width: 1,
+        ),
+        color: Appcolors.appAccentColor.withOpacity(0.05),
+      ),
+      child: SwitchListTile(
+        dense: true,
+        title: const Text('Organize by Media Type',
+            style: TextStyle(color: Appcolors.appTextColor, fontSize: 14)),
+        subtitle: const Text(
+            'Organize files into folders by type (videos/images/audio)',
+            style: TextStyle(color: Appcolors.appTextColor, fontSize: 11)),
+        value: settings['organizeByMediaType'] ?? true,
+        activeColor: Appcolors.appPrimaryColor,
+        contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+        onChanged: (value) {
+          setState(() {
+            widget.settingsBox.put('organizeByMediaType', value);
+            settings = widget.settingsBox.toMap();
+          });
+          _showAutoSaveNotification(
+              'Folder organization ${value ? 'enabled' : 'disabled'}');
+        },
+      ),
+    );
+  }
+
   Widget _buildSystemInfoSection() {
     return _buildGlassyCard(
       child: Column(
@@ -498,7 +555,12 @@ class _SettingsPageState extends State<SettingsPage> {
   }
 
   String _getCurrentEngineName() {
-    final engines = ['Recooma Engine', 'Gallery-dl Engine', 'Cyberdrop Engine'];
+    final engines = [
+      'Recooma Engine',
+      'Gallery-dl Engine',
+      'Cyberdrop Engine',
+      'Catalyex Engine'
+    ];
     final currentEngine = settings['eng'] ?? 0;
     if (currentEngine >= 0 && currentEngine < engines.length) {
       return engines[currentEngine];
