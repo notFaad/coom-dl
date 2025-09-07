@@ -4,7 +4,8 @@ class DownloadItem {
   String? downloadName;
   String? mimeType;
 
-  DownloadItem({required this.downloadName, required this.link}) {
+  DownloadItem(
+      {required this.downloadName, required this.link, this.mimeType}) {
     String ext = downloadName!.split(".").last;
     Map vids = {
       1: "3g2",

@@ -33,6 +33,7 @@ import 'package:flutter/services.dart';
 import 'package:hive/hive.dart';
 import 'package:isar/isar.dart';
 import 'package:path_provider/path_provider.dart';
+import 'package:desktop_multi_window/desktop_multi_window.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:window_manager/window_manager.dart';
 
@@ -944,12 +945,6 @@ class _MyHomePageState extends State<MyHomePage> {
           FilledButton(
               onPressed: directory != null && url != null && !isLoading
                   ? () async {
-                      // Refresh settings right before engine selection
-                      settingMap = Hive.box("settings").toMap();
-                      print("🔍 DEBUG: Raw settingMap = $settingMap");
-                      print("🔍 DEBUG: Selected engine = ${settingMap['eng']}");
-                      print(
-                          "🔍 DEBUG: Engine type = ${settingMap['eng'].runtimeType}");
                       if (settingMap['eng'] == 0) {
                         await RecoomaEngineDownload(downloaded, total);
                       } else if (settingMap['eng'] == 1) {
@@ -981,8 +976,6 @@ class _MyHomePageState extends State<MyHomePage> {
                         await CyberDropDownloaderEngine().download(
                             url: url!, dir: directory, historyBox: historyBox);
                       } else if (settingMap['eng'] == 3) {
-                        print(
-                            "🎯 DEBUG: CATALYEX ENGINE SELECTED - CALLING CatalyexEngineDownload");
                         await CatalyexEngineDownload(downloaded, total);
                       } else {
                         ScaffoldMessenger.of(context).showSnackBar(SnackBar(
@@ -1260,9 +1253,10 @@ class _MyHomePageState extends State<MyHomePage> {
 
   // ignore: non_constant_identifier_names
   Future<void> CatalyexEngineDownload(int d, int t) async {
+    Box historyBox = Hive.box("history");
     Box LinksBox = Hive.box("links");
 
-    print("🚀🚀🚀 Starting Catalyex Engine Download");
+    print("🚀 Starting Catalyex Engine Download");
 
     await CatalyexEngine().download(
         CB1: () {
@@ -1270,12 +1264,15 @@ class _MyHomePageState extends State<MyHomePage> {
         },
         CB2: (String message) {
           print("Catalyex Progress: $message");
+          streamController.add(message);
         },
         CB3: () {
           print("Catalyex: Download completed");
+          streamController.add("Download completed!");
         },
         CB4: () {
           print("Catalyex: Download error");
+          streamController.add("Download error!");
         },
         CB5: (String filename) {
           print("Catalyex: Starting file $filename");
@@ -1297,13 +1294,145 @@ class _MyHomePageState extends State<MyHomePage> {
         CB12: () {},
         CB13: () {},
         CB14: () {},
-        URL: url!,
-        outputfolder: directory!,
+        URL: clink,
+        outputfolder: outputpath,
         dirname: creator,
         nameformat: "%filename%",
         settingMap: settingMap,
         Debug: Debug,
         links_config: LinksBox.toMap());
+  }
+            totalalbums = 0; //UI View
+            cancel = false;
+            downloadAlbums = 0; //UI View
+          });
+          print("🔄 Catalyex CB1: Initialized download state");
+        },
+        CB2: (i, s) {
+          setState(() {
+            clink = i + 1;
+            totalLinks = s.length;
+            downloaded = 0;
+            cancel = false;
+          });
+          print("🔗 Catalyex CB2: Processing link ${i + 1}/${s.length}");
+        },
+        CB3: () {
+          setState(() {
+            isDone = false;
+          });
+          print("✅ Catalyex CB3: Download completed");
+        },
+        CB4: () {
+          setState(() {
+            isLoading = true;
+            //oneTime = true;
+          });
+          print("⏳ Catalyex CB4: Loading started");
+        },
+        CB5: (value) {
+          setState(() {
+            threads = value;
+          });
+          print("🧵 Catalyex CB5: Threads updated to $value");
+        },
+        CB6: (values) {
+          setState(() {
+            if (values['status'] == "ok") {
+              done_count++;
+            } else if (values['status'] == "skip") {
+              skip_count++;
+            } else if (values['status'] == "fail") {
+              fail_count++;
+            }
+            logg.add(values);
+            _scrollController
+                .jumpTo(_scrollController.position.maxScrollExtent);
+            if (values.containsKey('size')) {
+              try {
+                downloadSize += int.parse(values['size'].toString());
+                // ignore: empty_catches
+              } catch (e) {}
+            }
+          });
+          print("📊 Catalyex CB6: Progress update - ${values['status']}");
+        },
+        getFileSize: () {
+          return FileSizeConverter.getFileSizeString(
+              bytes: downloadSize, decimals: 1);
+        },
+        CB7: (value) {
+          setState(() {
+            downloadedCreators.add(value);
+            creator = value;
+          });
+          print("👤 Catalyex CB7: Creator updated to $value");
+        },
+        CB8: (value) {
+          setState(() {
+            downloadAlbums++;
+            downloaded = value;
+          });
+          print("📁 Catalyex CB8: Album downloaded - $value");
+        },
+        CB9: (value) {
+          setState(() {
+            totalalbums += value[0] as int;
+            total = value[0];
+            creator = value[1];
+            isCrawled = true;
+            scrap_logg.clear();
+          });
+          print("🎯 Catalyex CB9: Total albums: ${value[0]}, Creator: ${value[1]}");
+        },
+        CB10: () {
+          setState(() {
+            isDone = true;
+          });
+          print("🎉 Catalyex CB10: All downloads completed");
+        },
+        CB11: () {
+          setState(() {
+            url = null;
+            directory = null;
+            isLoading = false;
+            input.clear();
+          });
+          print("🧹 Catalyex CB11: UI reset");
+        },
+        CB12: () {
+          setState(() {
+            logg.clear();
+
+            done_count = 0;
+            fail_count = 0;
+            skip_count = 0;
+            isCrawled = false;
+            downloaded = 0;
+            total = 0;
+          });
+          print("🔄 Catalyex CB12: Counters reset");
+        },
+        CB13: () {
+          setState(() {
+            downloadSize = 0;
+          });
+          print("📊 Catalyex CB13: Download size reset");
+        },
+        CB14: () {
+          setState(() {
+            isLoading = false;
+            url = null;
+            directory = null;
+            threads = 0;
+            downloaded = 0;
+            logg.clear();
+            Debug = true;
+            input.clear();
+          });
+          print("🧹 Catalyex CB14: Complete state reset");
+        },
+        url: url);
 
     print("🎉 Catalyex Engine Download completed!");
   }
